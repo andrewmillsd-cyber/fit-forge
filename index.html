@@ -3,138 +3,203 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>FitForge | AI Food Scanner</title>
+<meta name="theme-color" content="#00b88c"/>
+<title>FitForge | All-In-One Fitness</title>
 <style>
     :root {
         --navy: #0a192f; --teal: #00b88c; --white: #ffffff;
         --bg: #f4f7f6; --text2: #4a5568; --red: #ff4757;
+        --nav-h: 70px; --r-sm: 12px;
     }
-    body { font-family: 'Figtree', sans-serif; background: var(--bg); margin: 0; padding: 0; }
-    .card { background: white; border-radius: 16px; padding: 20px; margin: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .scan-status { display: none; padding: 15px; text-align: center; border-radius: 12px; margin-top: 10px; }
-    .loading { background: #e0f7f0; color: var(--teal); display: none; }
-    .result { background: white; border: 2px solid var(--teal); }
-    .error { background: #ffe8e8; color: var(--red); }
+    body { font-family: 'Figtree', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; }
+    .card { background: white; border-radius: 16px; padding: 15px; margin: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .page { display: none; }
+    .page.active { display: block; }
+    
+    /* Navigation */
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; height: var(--nav-h); background: white; display: flex; justify-content: space-around; border-top: 1px solid #eee; z-index: 100; }
+    .nav-item { border: none; background: none; font-size: 0.7rem; color: #888; padding: 10px; }
+    .nav-item.active { color: var(--teal); font-weight: bold; }
+
+    /* AI Scanner Specific Styles */
+    .scan-status { display: none; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center; }
+    .loading { background: #e0f7f0; color: var(--teal); }
+    .result { border: 2px solid var(--teal); }
     .apikey-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; box-sizing: border-box; }
-    .btn-primary { background: var(--teal); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+    .btn-primary { background: var(--teal); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<div class="card">
-    <h2 style="margin-top:0; color:var(--navy);">AI Food Scanner</h2>
-    <p style="font-size:0.85rem; color:var(--text2);">Take a photo of your meal to calculate macros instantly.</p>
-    
-    <div id="setupKey">
-        <input type="password" id="apikeyInput" class="apikey-input" placeholder="Paste Gemini API Key here...">
-        <button class="btn-primary" onclick="saveApiKey()">Save API Key</button>
-        <p style="font-size:0.7rem; color:var(--text2); margin-top:8px;">Get a free key at aistudio.google.com</p>
+<div style="background:var(--navy); color:white; padding:10px 15px; font-size:0.8rem; display:flex; justify-content:space-between;">
+    <span id="profileDisplayName">FitForge User</span>
+    <span id="headerWeight">0.0 kg</span>
+</div>
+
+<div id="page-foodlog" class="page active">
+    <div class="card">
+        <h3>Daily Macro Progress</h3>
+        <div id="logDayDate" style="font-size:0.8rem; color:var(--text2); margin-bottom:10px;"></div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; text-align:center;">
+            <div><div id="ltbKcal" style="font-weight:bold;">0</div><div style="font-size:0.6rem;">KCAL</div></div>
+            <div><div id="ltbProtein" style="font-weight:bold;">0g</div><div style="font-size:0.6rem;">PRO</div></div>
+            <div><div id="ltbCarbs" style="font-weight:bold;">0g</div><div style="font-size:0.6rem;">CARB</div></div>
+            <div><div id="ltbFat" style="font-weight:bold;">0g</div><div style="font-size:0.6rem;">FAT</div></div>
+        </div>
     </div>
 
-    <div id="scannerUI" style="display:none; margin-top:20px;">
-        <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none" onchange="processImage(this)">
-        <button class="btn-primary" onclick="document.getElementById('photoFileInput').click()">📸 Take Photo / Upload</button>
-        
-        <div id="scanStatusLoading" class="scan-status loading">Analysing meal...</div>
-        
-        <div id="scanStatusResult" class="scan-status result">
-            <h3 id="resName" style="margin:0"></h3>
-            <p id="resMacros" style="font-weight:bold; color:var(--teal); margin:8px 0;"></p>
-            <p id="resDesc" style="font-size:0.8rem; color:var(--text2);"></p>
-            <button class="btn-primary" onclick="location.reload()">Done</button>
+    <div class="card">
+        <h4>AI Food Scanner</h4>
+        <div id="setupKey">
+            <input type="password" id="apikeyInput" class="apikey-input" placeholder="Paste Gemini API Key...">
+            <button class="btn-primary" onclick="saveApiKey()">Save Key</button>
         </div>
-
-        <div id="scanStatusError" class="scan-status error">
-            Failed to read image. Please try again with a clearer photo.
+        <div id="scannerUI" style="display:none;">
+            <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none" onchange="processImage(this)">
+            <button class="btn-primary" onclick="document.getElementById('photoFileInput').click()">📸 Take Photo</button>
+            <div id="scanStatusLoading" class="scan-status loading">Analysing...</div>
+            <div id="scanStatusResult" class="scan-status result">
+                <h4 id="resName" style="margin:0"></h4>
+                <p id="resMacros" style="font-weight:bold; color:var(--teal); margin:5px 0;"></p>
+                <button class="btn-primary" style="margin-top:10px;" id="addAiBtn">Log This Meal</button>
+            </div>
         </div>
     </div>
 </div>
 
+<div id="page-workout" class="page">
+    <div class="card">
+        <h3>LISS Treadmill Protocol</h3>
+        <table style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+            <thead><tr style="border-bottom:1px solid #eee;"><th>Min</th><th>Phase</th><th>Speed</th><th>Incline</th></tr></thead>
+            <tbody id="workoutTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="page-weight" class="page">
+    <div class="card">
+        <h3>Weight Tracker</h3>
+        <input type="number" id="weightInput" step="0.1" placeholder="0.0" style="padding:10px; width:80px;">
+        <button class="btn-primary" style="width:auto;" onclick="logWeight()">Log Weight</button>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('foodlog', this)">🍴 Log</button>
+    <button class="nav-item" onclick="showPage('workout', this)">🏃 Workout</button>
+    <button class="nav-item" onclick="showPage('weight', this)">⚖️ Weight</button>
+</div>
+
 <script>
-    // 1. Storage Helpers
-    const ls = (k) => localStorage.getItem(k);
+    const ls = (k, def) => localStorage.getItem(k) || def;
     const lsSet = (k, v) => localStorage.setItem(k, v);
 
-    // 2. Setup Check
+    // ── CORE APP LOGIC ──
     window.onload = () => {
-        if(ls('gemini_api_key')) {
+        document.getElementById('profileDisplayName').textContent = ls('username', 'The Forge');
+        if(ls('gemini_api_key', '')) {
             document.getElementById('setupKey').style.display = 'none';
             document.getElementById('scannerUI').style.display = 'block';
         }
+        buildWorkoutTable();
+        updateLogDisplay();
     };
 
+    function showPage(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // ── AI SCANNER LOGIC [FIXED] ──
     function saveApiKey() {
         const key = document.getElementById('apikeyInput').value;
         if(key.startsWith('AIza')) {
             lsSet('gemini_api_key', key);
-            alert("Key saved successfully!");
             location.reload();
-        } else {
-            alert("Invalid key format. Should start with 'AIza'");
         }
     }
 
-    // 3. AI Logic
     async function processImage(input) {
-        if (!input.files || !input.files[0]) return;
-        
         const file = input.files[0];
+        if (!file) return;
         const reader = new FileReader();
-        
         document.getElementById('scanStatusLoading').style.display = 'block';
         document.getElementById('scanStatusResult').style.display = 'none';
-        document.getElementById('scanStatusError').style.display = 'none';
 
         reader.onload = async (e) => {
-            const base64Data = e.target.result.split(',')[1];
-            await callGeminiAI(base64Data, file.type);
+            const base64 = e.target.result.split(',')[1];
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ls('gemini_api_key','')}`;
+            
+            const payload = {
+                contents: [{ parts: [
+                    { text: "Return ONLY JSON: {\"name\":\"Food Name\",\"kcal\":0,\"p\":0,\"c\":0,\"f\":0}" },
+                    { inline_data: { mime_type: file.type, data: base64 } }
+                ]}]
+            };
+
+            try {
+                const res = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                const raw = data.candidates[0].content.parts[0].text;
+                const clean = raw.replace(/```json|```/g, "").trim();
+                const food = JSON.parse(clean);
+                
+                document.getElementById('scanStatusLoading').style.display = 'none';
+                document.getElementById('scanStatusResult').style.display = 'block';
+                document.getElementById('resName').innerText = food.name;
+                document.getElementById('resMacros').innerText = `${food.kcal} kcal | P:${food.p}g C:${food.c}g F:${food.f}g`;
+                
+                document.getElementById('addAiBtn').onclick = () => {
+                    saveFoodEntry(food);
+                    alert("Logged!");
+                    location.reload();
+                };
+            } catch (e) { alert("Scanner error. Check your API key."); }
         };
         reader.readAsDataURL(file);
     }
 
-    async function callGeminiAI(base64, mimeType) {
-        const key = ls('gemini_api_key');
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-
-        const payload = {
-            contents: [{
-                parts: [
-                    { text: "Identify the food in this image. Return ONLY a JSON object: {\"name\": \"Food Name\", \"kcal\": 0, \"p\": 0, \"c\": 0, \"f\": 0, \"desc\": \"short description\"}" },
-                    { inline_data: { mime_type: mimeType, data: base64 } }
-                ]
-            }]
-        };
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            const textResult = data.candidates[0].content.parts[0].text;
-            
-            // Clean AI formatting (removes ```json etc)
-            const cleanJson = textResult.replace(/```json|```/g, "").trim();
-            const food = JSON.parse(cleanJson);
-
-            showResult(food);
-        } catch (err) {
-            console.error(err);
-            document.getElementById('scanStatusLoading').style.display = 'none';
-            document.getElementById('scanStatusError').style.display = 'block';
-        }
+    // ── DATA PERSISTENCE ──
+    function saveFoodEntry(food) {
+        let log = JSON.parse(ls('foodLog', '[]'));
+        log.push({ ...food, date: new Date().toISOString() });
+        lsSet('foodLog', JSON.stringify(log));
     }
 
-    function showResult(food) {
-        document.getElementById('scanStatusLoading').style.display = 'none';
-        document.getElementById('scanStatusResult').style.display = 'block';
-        
-        document.getElementById('resName').innerText = food.name;
-        document.getElementById('resMacros').innerText = `${food.kcal} kcal | P:${food.p}g C:${food.c}g F:${food.f}g`;
-        document.getElementById('resDesc').innerText = food.desc;
+    function updateLogDisplay() {
+        const log = JSON.parse(ls('foodLog', '[]'));
+        const totals = log.reduce((acc, curr) => {
+            acc.kcal += curr.kcal; acc.p += curr.p; acc.c += curr.c; acc.f += curr.f;
+            return acc;
+        }, { kcal:0, p:0, c:0, f:0 });
+
+        document.getElementById('ltbKcal').innerText = totals.kcal;
+        document.getElementById('ltbProtein').innerText = totals.p + 'g';
+        document.getElementById('ltbCarbs').innerText = totals.c + 'g';
+        document.getElementById('ltbFat').innerText = totals.f + 'g';
+    }
+
+    // ── WORKOUT TABLE ──
+    const WORKOUT_ROWS = [
+        { min:'00–05', phase:'Warm', speed:3.5, incline:4 },
+        { min:'05–08', phase:'Burn', speed:3.8, incline:5 },
+        { min:'08–11', phase:'Burn', speed:4.0, incline:6 }
+    ];
+
+    function buildWorkoutTable() {
+        const tbody = document.getElementById('workoutTableBody');
+        tbody.innerHTML = WORKOUT_ROWS.map(row => `
+            <tr style="border-bottom:1px solid #f9f9f9;">
+                <td style="padding:10px 0;">${row.min}</td>
+                <td>${row.phase}</td>
+                <td>${row.speed}</td>
+                <td>${row.incline}</td>
+            </tr>
+        `).join('');
     }
 </script>
-
 </body>
 </html>
