@@ -1,134 +1,140 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.4">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>FitForge | AI Food Scanner</title>
+<style>
+    :root {
+        --navy: #0a192f; --teal: #00b88c; --white: #ffffff;
+        --bg: #f4f7f6; --text2: #4a5568; --red: #ff4757;
+    }
+    body { font-family: 'Figtree', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+    .card { background: white; border-radius: 16px; padding: 20px; margin: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .scan-status { display: none; padding: 15px; text-align: center; border-radius: 12px; margin-top: 10px; }
+    .loading { background: #e0f7f0; color: var(--teal); display: none; }
+    .result { background: white; border: 2px solid var(--teal); }
+    .error { background: #ffe8e8; color: var(--red); }
+    .apikey-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; box-sizing: border-box; }
+    .btn-primary { background: var(--teal); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+</style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="en"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;FitForge | AI Food Scanner&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>:root {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--navy: #0a192f; --teal: #00b88c; --teal-dark: #008f6d;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--bg: #f4f7f6; --card: #ffffff; --text2: #4a5568; --red: #ff4d4d;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* ... (Rest of your original CSS remains unchanged) ... */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="page-foodlog" class="page active"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;input type="file" id="photoFileInput" accept="image/*" capture="environment" onchange="handlePhotoSelected(this)" style="display:none"/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="scan-btn-wrap"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="scan-photo-btn" onclick="document.getElementById('photoFileInput').click()"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="scan-btn-icon"&gt;📸&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="scan-btn-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="scan-btn-title"&gt;Scan Food with AI&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="apikeyPromptRow" class="card card-pad"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="apikey-label"&gt;Enter Gemini API Key:&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="password" id="apikeyInput" class="cmf-input" placeholder="AIza..."/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="scan-log-btn" onclick="saveApiKey()"&gt;Save Key&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="scanStatusLoading" style="display:none"&gt;Analysing...&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="scanStatusResult" style="display:none"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h3 id="srFoodName"&gt;&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;p id="srDesc"&gt;&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="srMacros"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="scan-log-btn" onclick="logScannedMeal()"&gt;✅ Log This Meal&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* ═══════════════════════════════════════</p>
-<p class="p1"><span class="Apple-converted-space">           </span>AI SCANNER LOGIC - FIXED</p>
-<p class="p1"><span class="Apple-converted-space">        </span>═══════════════════════════════════════ */</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let _scanResult = null;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>async function scanFoodWithClaude(base64, mediaType, apiKey) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Explicit instructions for the AI to return ONLY JSON</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const prompt = "Act as a nutrition expert. Return ONLY a JSON object: {\"name\":\"Food Name\",\"description\":\"desc\",\"kcal\":0,\"protein\":0,\"carbs\":0,\"fat\":0}.";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const body = {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>contents: [{</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>parts: [{ text: prompt }, { inline_data: { mime_type: mediaType, data: base64 } }]</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}]</p>
-<p class="p1"><span class="Apple-converted-space">            </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>try {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const data = await res.json();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const rawText = data.candidates[0].content.parts[0].text;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// CLEANING: Strip markdown backticks if AI adds them</p>
-<p class="p1"><span class="Apple-converted-space">                </span>let jsonStr = rawText.replace(/```json/g, "").replace(/```/g, "").trim();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const parsed = JSON.parse(jsonStr);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>_scanResult = {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>name: parsed.name,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>kcal: Math.round(parsed.kcal),</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>p: Math.round(parsed.protein),</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>c: Math.round(parsed.carbs),</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>f: Math.round(parsed.fat)</p>
-<p class="p1"><span class="Apple-converted-space">                </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>displayResult(_scanResult);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} catch (err) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>console.error("AI Error:", err);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>alert("Scanner failed. Check your API key or photo clarity.");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Handle Image Selection and Compression</p>
-<p class="p1"><span class="Apple-converted-space">        </span>async function handlePhotoSelected(input) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const file = input.files[0];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const key = localStorage.getItem('fitforge_api_key');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (!key) return alert("Please save your API key first.");</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const reader = new FileReader();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>reader.onload = async (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const base64 = e.target.result.split(',')[1];</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('scanStatusLoading').style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>await scanFoodWithClaude(base64, file.type, key);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>};</p>
-<p class="p1"><span class="Apple-converted-space">            </span>reader.readAsDataURL(file);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function saveApiKey() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const val = document.getElementById('apikeyInput').value;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (val) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>localStorage.setItem('fitforge_api_key', val);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>alert("Key Saved!");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function displayResult(r) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('scanStatusLoading').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('scanStatusResult').style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('srFoodName').textContent = r.name;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('srMacros').textContent = `${r.kcal} kcal | P: ${r.p}g | C: ${r.c}g | F: ${r.f}g`;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// (Include your original food log functions: getFoodLog, saveFoodLog, etc.)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+
+<div class="card">
+    <h2 style="margin-top:0; color:var(--navy);">AI Food Scanner</h2>
+    <p style="font-size:0.85rem; color:var(--text2);">Take a photo of your meal to calculate macros instantly.</p>
+    
+    <div id="setupKey">
+        <input type="password" id="apikeyInput" class="apikey-input" placeholder="Paste Gemini API Key here...">
+        <button class="btn-primary" onclick="saveApiKey()">Save API Key</button>
+        <p style="font-size:0.7rem; color:var(--text2); margin-top:8px;">Get a free key at aistudio.google.com</p>
+    </div>
+
+    <div id="scannerUI" style="display:none; margin-top:20px;">
+        <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none" onchange="processImage(this)">
+        <button class="btn-primary" onclick="document.getElementById('photoFileInput').click()">📸 Take Photo / Upload</button>
+        
+        <div id="scanStatusLoading" class="scan-status loading">Analysing meal...</div>
+        
+        <div id="scanStatusResult" class="scan-status result">
+            <h3 id="resName" style="margin:0"></h3>
+            <p id="resMacros" style="font-weight:bold; color:var(--teal); margin:8px 0;"></p>
+            <p id="resDesc" style="font-size:0.8rem; color:var(--text2);"></p>
+            <button class="btn-primary" onclick="location.reload()">Done</button>
+        </div>
+
+        <div id="scanStatusError" class="scan-status error">
+            Failed to read image. Please try again with a clearer photo.
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Storage Helpers
+    const ls = (k) => localStorage.getItem(k);
+    const lsSet = (k, v) => localStorage.setItem(k, v);
+
+    // 2. Setup Check
+    window.onload = () => {
+        if(ls('gemini_api_key')) {
+            document.getElementById('setupKey').style.display = 'none';
+            document.getElementById('scannerUI').style.display = 'block';
+        }
+    };
+
+    function saveApiKey() {
+        const key = document.getElementById('apikeyInput').value;
+        if(key.startsWith('AIza')) {
+            lsSet('gemini_api_key', key);
+            alert("Key saved successfully!");
+            location.reload();
+        } else {
+            alert("Invalid key format. Should start with 'AIza'");
+        }
+    }
+
+    // 3. AI Logic
+    async function processImage(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        const reader = new FileReader();
+        
+        document.getElementById('scanStatusLoading').style.display = 'block';
+        document.getElementById('scanStatusResult').style.display = 'none';
+        document.getElementById('scanStatusError').style.display = 'none';
+
+        reader.onload = async (e) => {
+            const base64Data = e.target.result.split(',')[1];
+            await callGeminiAI(base64Data, file.type);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function callGeminiAI(base64, mimeType) {
+        const key = ls('gemini_api_key');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+        const payload = {
+            contents: [{
+                parts: [
+                    { text: "Identify the food in this image. Return ONLY a JSON object: {\"name\": \"Food Name\", \"kcal\": 0, \"p\": 0, \"c\": 0, \"f\": 0, \"desc\": \"short description\"}" },
+                    { inline_data: { mime_type: mimeType, data: base64 } }
+                ]
+            }]
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            const textResult = data.candidates[0].content.parts[0].text;
+            
+            // Clean AI formatting (removes ```json etc)
+            const cleanJson = textResult.replace(/```json|```/g, "").trim();
+            const food = JSON.parse(cleanJson);
+
+            showResult(food);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('scanStatusLoading').style.display = 'none';
+            document.getElementById('scanStatusError').style.display = 'block';
+        }
+    }
+
+    function showResult(food) {
+        document.getElementById('scanStatusLoading').style.display = 'none';
+        document.getElementById('scanStatusResult').style.display = 'block';
+        
+        document.getElementById('resName').innerText = food.name;
+        document.getElementById('resMacros').innerText = `${food.kcal} kcal | P:${food.p}g C:${food.c}g F:${food.f}g`;
+        document.getElementById('resDesc').innerText = food.desc;
+    }
+</script>
+
 </body>
 </html>
